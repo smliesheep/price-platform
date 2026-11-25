@@ -6,7 +6,7 @@ metadata:
 spec:
   scaleTargetRef:
     name: worker
-  minReplicaCount: 1
+  minReplicaCount: 2
   maxReplicaCount: 6
   cooldownPeriod: 120
   pollingInterval: 15
@@ -18,5 +18,6 @@ spec:
         consumerGroup: workers
         lagCount: "50"
         activationLagCount: "10"
+
 
 
