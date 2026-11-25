@@ -68,7 +68,7 @@ def setup_logging(svc: str, level: str | None = None) -> None:
     handler.setFormatter(JsonFormatter(svc))
     root.addHandler(handler)
     root.setLevel((level or settings.log_level).upper())
-    for noisy in ("uvicorn.access", "asyncio", "aiohttp.access"):
+    for noisy in ("uvicorn.access", "asyncio", "aiohttp.access", "httpx", "httpcore"):
         logging.getLogger(noisy).setLevel("WARNING")
 
 
@@ -90,4 +90,5 @@ class _KwargsAdapter(logging.LoggerAdapter):
 
 def get_logger(svc: str) -> logging.LoggerAdapter:
     return _KwargsAdapter(logging.getLogger(svc), {})
+
 

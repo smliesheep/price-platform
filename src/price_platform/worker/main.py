@@ -1,4 +1,4 @@
-"""worker 进程入口：预热浏览器、N 个消费协程、心跳、优雅退出。"""
+﻿"""worker 进程入口：预热浏览器、N 个消费协程、心跳、优雅退出。"""
 
 from __future__ import annotations
 
@@ -49,11 +49,8 @@ async def main() -> int:
 
     try:
         await browser.start()
-    except Exception as exc:  # noqa: BLE001 - 浏览器起不来时 Worker 没有存在意义
-        log.error("browser_start_failed", error_msg=str(exc))
-        await redis.aclose()
-        await pool.close()
-        return 1
+    except Exception as exc:  # noqa: BLE001 - HTTP 适配器模式不需要浏览器
+        log.warning("browser_unavailable", error_msg=str(exc), note="http-only mode")
 
     async def ready() -> None:
         await pool.fetchval("SELECT 1")
@@ -109,3 +106,4 @@ def run() -> None:
 
 if __name__ == "__main__":
     run()
+

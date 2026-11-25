@@ -158,7 +158,7 @@ async def handle(ctx: WorkerContext, msg_id: str, fields: dict[str, str]) -> Non
         adapter = ctx.adapters.get(data["adapter"]) or ctx.adapters["generic"]
 
         await ctx.limiter.acquire(int(data["source_id"]), int(data["rate_limit_per_min"] or 0))
-        browser = await ctx.browser.ensure()
+        browser = await ctx.browser.ensure() if adapter.needs_browser else None
         product_ctx = {"url": data["url"]}
         source_ctx = {"base_url": data["base_url"]}
         snapshot = await asyncio.wait_for(
@@ -374,5 +374,6 @@ async def heartbeat_loop(ctx: WorkerContext, version: str) -> None:
             await asyncio.wait_for(ctx.stop_event.wait(), timeout=ctx.settings.worker_heartbeat_sec)
         except asyncio.TimeoutError:
             pass
+
 
 

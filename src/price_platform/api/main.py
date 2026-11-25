@@ -148,3 +148,7 @@ def run() -> None:
 
 __all__ = ["app", "create_app", "ok"]
 
+
+if __name__ == "__main__":
+    run()
+

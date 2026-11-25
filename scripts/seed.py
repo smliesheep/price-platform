@@ -1,4 +1,4 @@
-﻿"""初始化演示数据：1 个站点源 + N 个商品 + 对应采集计划。
+"""初始化演示数据：1 个站点源 + N 个商品 + 对应采集计划。
 
 用法：
     python scripts/seed.py --interval 1800          # 20 个商品，30 分钟一次
@@ -36,6 +36,7 @@ async def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--interval", type=int, default=1800, help="采集间隔（秒）")
     parser.add_argument("--limit", type=int, default=20, help="商品数量上限")
+    parser.add_argument("--adapter", default="mock", choices=["mock", "generic", "http"], help="抓取适配器")
     parser.add_argument("--max-retry", type=int, default=3)
     parser.add_argument("--timeout", type=int, default=300)
     parser.add_argument("--mock-url", default=os.getenv("PP_MOCK_SHOP_URL", "http://localhost:8088"))
@@ -50,12 +51,14 @@ async def main() -> int:
         source_id = await conn.fetchval(
             """
             INSERT INTO sources (name, base_url, adapter, rate_limit_per_min)
-            VALUES ($1, $2, 'mock', 600)
-            ON CONFLICT (name) DO UPDATE SET base_url = EXCLUDED.base_url, updated_at = now()
+            VALUES ($1, $2, $3, 600)
+            ON CONFLICT (name) DO UPDATE
+            SET base_url = EXCLUDED.base_url, adapter = EXCLUDED.adapter, updated_at = now()
             RETURNING id
             """,
             "mock-shop",
             args.source_base_url or args.mock_url,
+            args.adapter,
         )
 
         created = 0
@@ -102,4 +105,5 @@ async def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(asyncio.run(main()))
+
 

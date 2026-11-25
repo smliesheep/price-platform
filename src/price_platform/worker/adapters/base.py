@@ -84,6 +84,7 @@ def _json_ld_price(tree: HTMLParser) -> Decimal | None:
 
 class BaseAdapter(ABC):
     name: str = "base"
+    needs_browser: bool = True
 
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
@@ -209,4 +210,5 @@ def _classify_navigation(exc: BaseException, url: str) -> ScrapeError:
     if "404" in text:
         return NotFoundError(f"not found: {url}")
     return NetworkError(f"navigation failed: {url} ({type(exc).__name__})")
+
 

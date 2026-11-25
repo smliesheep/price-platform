@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+﻿apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: worker
@@ -25,6 +25,7 @@ spec:
         - name: worker
           image: price/worker:v1
           imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "price_platform.worker.main"]
           envFrom:
             - configMapRef: { name: price-config }
             - secretRef:    { name: price-secret }
@@ -56,3 +57,4 @@ spec:
           configMap: { name: price-selectors }
         - name: tmp
           emptyDir: { sizeLimit: 1Gi }
+
