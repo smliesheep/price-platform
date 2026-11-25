@@ -1,4 +1,4 @@
-﻿"""商品创建时的轻量预览：不启动浏览器，用 httpx + selectolax 取标题/价格。"""
+"""商品创建时的轻量预览：不启动浏览器，用 httpx + selectolax 取标题/价格。"""
 
 from __future__ import annotations
 

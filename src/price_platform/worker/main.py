@@ -1,4 +1,4 @@
-﻿"""worker 进程入口：预热浏览器、N 个消费协程、心跳、优雅退出。"""
+"""worker 进程入口：预热浏览器、N 个消费协程、心跳、优雅退出。"""
 
 from __future__ import annotations
 

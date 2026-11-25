@@ -1,1 +1,1 @@
-﻿"""price_platform package."""
+"""price_platform package."""

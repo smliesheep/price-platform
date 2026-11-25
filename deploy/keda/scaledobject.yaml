@@ -1,0 +1,22 @@
+﻿apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: worker
+  namespace: price
+spec:
+  scaleTargetRef:
+    name: worker
+  minReplicaCount: 1
+  maxReplicaCount: 6
+  cooldownPeriod: 120
+  pollingInterval: 15
+  triggers:
+    - type: redis-streams
+      metadata:
+        address: redis.price.svc.cluster.local:6379
+        stream: price:tasks
+        consumerGroup: workers
+        lagCount: "50"
+        activationLagCount: "10"
+
+

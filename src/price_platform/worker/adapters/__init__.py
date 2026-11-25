@@ -1,4 +1,4 @@
-﻿"""适配器注册表。"""
+"""适配器注册表。"""
 
 from __future__ import annotations
 

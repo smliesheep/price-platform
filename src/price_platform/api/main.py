@@ -107,6 +107,7 @@ def create_app() -> FastAPI:
         runs.router,
         workers.router,
         system.router,
+        alerts.router,
     ):
         app.include_router(router, prefix="/api/v1")
 

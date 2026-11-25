@@ -1,4 +1,4 @@
-apiVersion: v1
+﻿apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-config
@@ -95,6 +95,14 @@ spec:
       labels: { app: prometheus }
     spec:
       securityContext: { runAsUser: 65534, fsGroup: 65534 }
+      nodeSelector: { kubernetes.io/hostname: k3d-price-agent-1 }
+      initContainers:
+        - name: chown
+          image: busybox:1.36
+          command: ["sh", "-c", "chown -R 65534:65534 /prometheus"]
+          securityContext: { runAsUser: 0 }
+          volumeMounts:
+            - { name: data, mountPath: /prometheus }
       containers:
         - name: prometheus
           image: prom/prometheus:v2.55.0
@@ -132,3 +140,5 @@ spec:
   selector: { app: prometheus }
   ports:
     - { name: http, port: 9090, targetPort: 9090 }
+
+

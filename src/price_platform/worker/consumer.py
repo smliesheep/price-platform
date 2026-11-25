@@ -1,4 +1,4 @@
-﻿"""Worker 消费主循环：抢占 → 抓取 → 落库 → ack；失败按策略重试或进 DLQ。"""
+"""Worker 消费主循环：抢占 → 抓取 → 落库 → ack；失败按策略重试或进 DLQ。"""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-﻿"""进程级配置：全部来自环境变量（PP_ 前缀）/ .env。"""
+"""进程级配置：全部来自环境变量（PP_ 前缀）/ .env。"""
 
 from __future__ import annotations
 

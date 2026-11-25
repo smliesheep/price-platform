@@ -1,4 +1,4 @@
-﻿"""选择器集合：从 ConfigMap 挂载目录加载，按 (adapter, version) 取用，支持热更新。"""
+"""选择器集合：从 ConfigMap 挂载目录加载，按 (adapter, version) 取用，支持热更新。"""
 
 from __future__ import annotations
 

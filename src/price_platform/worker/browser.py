@@ -1,4 +1,4 @@
-﻿"""浏览器生命周期：进程内单 Chromium，任务级 BrowserContext 隔离。"""
+"""浏览器生命周期：进程内单 Chromium，任务级 BrowserContext 隔离。"""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-﻿"""HTTP 适配器：不启动浏览器，直接用 httpx 取 HTML。
+"""HTTP 适配器：不启动浏览器，直接用 httpx 取 HTML。
 
 适用于服务端渲染页面（如 Mock 商城）；JS 渲染站点仍需 Playwright 适配器。
 好处是 Worker 镜像可以不含 Chromium，资源占用低、吞吐高。

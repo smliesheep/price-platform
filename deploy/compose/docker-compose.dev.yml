@@ -1,4 +1,4 @@
-﻿name: price-dev
+name: price-dev
 
 services:
   postgres:

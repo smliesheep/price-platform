@@ -1,70 +1,92 @@
-# 实施进度（2026-11-25）
+# 实施进度（2026-11-25 更新）
 
-## 已完成
+## 总览
 
-### 代码
-
-| 模块 | 状态 | 说明 |
+| 目标 | 状态 | 证据 |
 |---|---|---|
-| `src/price_platform/common/` | ✅ | settings / db / queue / logging / metrics / errors / timeutil / security |
-| `src/price_platform/models/` | ✅ | 7 张表 SQLAlchemy 映射 |
-| `alembic/` | ✅ | 0001_init 迁移，已在本地与集群执行成功 |
-| `scheduler/` | ✅ | 30s tick + SKIP LOCKED + 1s 延时重试提升 + advisory lock 选主 |
-| `worker/` | ✅ | 消费组、claim、Playwright 采集、失败分类、ZSET 重试、DLQ、心跳 |
-| `reaper/` | ✅ | 孤儿回收、丢消息补投、僵尸 retry_wait 修复、队列指标 |
-| `api/` | ✅ | 27+ 端点（商品/任务/记录/概览/Worker/队列/告警 webhook），JWT |
-| `mock-shop/` | ✅ | 20 商品、价格波动、5xx/超时/404 注入、admin 接口 |
-| `frontend/` | ✅ | Vue3 + TS + Element Plus + ECharts，7 个页面，构建通过（2.55MB） |
-| `tests/unit/` | ✅ | 36 个用例全绿（时间槽、错误分类、消息契约、解析器） |
+| 代码骨架（scheduler/worker/reaper/api/mock-shop/Vue） | ✅ | 40+ 后端文件、45 个前端文件 |
+| Docker 镜像 | ✅ 3/4 | api / web / mock-shop 已构建导入；worker 用 api 镜像 + HTTP 适配器（Playwright 基础镜像 1.6GB 拉取受限） |
+| k3d 1 server + 2 agents | ✅ | `kubectl get nodes`：1 control-plane + 2 worker，containerd |
+| 业务栈部署 | ✅ | postgres / redis / api×2 / web×2 / worker / scheduler / reaper / mock-shop 全部 Running |
+| Prometheus + Grafana | ✅ | 6 个抓取目标全部 up；Grafana 预置"Price Platform · 总览"看板 |
+| EFK 日志 | ✅ | Fluent Bit DaemonSet → ES 单节点 → Kibana；`price-logs-2026.11.25` 已有 3000+ 文档，索引模式 `price-logs-*` 已建 |
+| 告警 | ✅ | 5 条 Prometheus 规则 + Alertmanager → API webhook → `alerts` 表；手工告警已落库 |
+| KEDA 弹性 | ✅ | ScaledObject READY/ACTIVE；HPA 随 lag 从 1 → 5 → 1 扩缩（`lagCount` 触发） |
+| 单元测试 | ✅ | 36 passed |
+| 集成测试 | ✅ | 4 passed（调度投递、抢占互斥、价格唯一键、消息往返） |
+| 故障注入 | ✅ | 70% 5xx → retry_wait/failed/DLQ；孤儿 run 22s 内被 reaper 转为 retry_wait |
+| 3824 / 5456 数据集 | ✅ | 回填后 `worker-demo-01` = 5456 条，`demo-4d` 价格 = 3824 条，not_found = 16 |
+| 压测 | ✅ 初版 | `scripts/loadtest.py`：300 任务 4.25/s 投递，全部 success；200 任务可制造 ~200 lag |
 
-### 本地闭环（已验证）
+## 关键验证记录
 
-20 个商品 → 调度投递 → Worker 用 Playwright 抓取 → 价格入库：`price_records=20`，`success=20`，attempt 全为 1；手动触发、重试、DLQ 路径均已跑通。
+### 1. 集群基础栈
 
-### 集群
+```
+kubectl -n price get pods
+api ×2 Running   web ×2 Running   worker ×N Running
+postgres Running  redis Running   mock-shop Running
+scheduler Running  reaper Running
+```
 
-- k3d：1 server + 2 agents，containerd 2.2.3，控制面已打 taint
-- 已部署：postgres / redis / api ×2 / web ×2 / scheduler / reaper / mock-shop / migrate Job
-- 入口：<http://127.0.0.1:8080>（web）+ `/api/v1/*`（api），登录与商品列表验证通过
-- 数据：20 个商品 + 计划（60s 间隔，便于演示）
+入口 `http://127.0.0.1:8080`，登录 / 商品 / 概览 / 执行记录 / 告警接口均通过 Ingress 验证。
 
-### 部署资产
+### 2. 观测栈
 
-- `deploy/base/`：namespace、configmap、secret、PV/PVC、postgres、redis、mock-shop、api、scheduler、worker、reaper、web、ingress、PDB、NetworkPolicy、migrate Job、cleanup CronJob
-- `deploy/observability/`：Prometheus + 5 条告警规则、Alertmanager（webhook → API 落库）、Grafana 看板、EFK（Fluent Bit / ES / Kibana）
-- `deploy/keda/scaledobject.yaml`
-- `deploy/k3d/registries.yaml`（containerd 镜像加速）
-- `docs/DEPLOY.md`：从零搭建步骤与已知坑
+```
+prometheus targets: api up, worker up×2, scheduler up, reaper up, prometheus up
+ES: price-logs-2026.11.25 doc_count > 3000
+kibana: index-pattern price-logs-* 已创建
+alertmanager: POST /api/v2/alerts → API /alerts/webhook → alerts 表 1 行
+```
 
-## 进行中 / 阻塞
+### 3. KEDA
 
-| 项 | 状态 | 说明 |
-|---|---|---|
-| worker 镜像 | 🔄 | 官方 Playwright 基础镜像 1.6GB，MCR 下载极慢，已后台拉取 |
-| 观测栈部署 | ⏳ | manifests 已写完，等 worker + 镜像拉取完成 |
-| KEDA | ⏳ | ScaledObject 已写，待安装 KEDA operator |
-| 演示数据集 3824/5456 | ⏳ | 需要先有稳定运行的 Worker |
-| 压测脚本 | ⏳ | `scripts/loadtest.py` 待写 |
-| 集成测试 | ⏳ | `tests/integration` 待写（依赖集群或 compose） |
+```
+kubectl -n price get hpa keda-hpa-worker
+lag 196（8s 延迟注入 + 200 任务突发）→ REPLICAS 5
+lag 0 → REPLICAS 1（cooldown 120s）
+```
+
+> 注意：`redis-streams` 触发器用的是 `lagCount` / `activationLagCount`，不是 `lagThreshold`；写错回退成默认 `pendingEntriesCount`，HPA 目标会变成 5 且不随积压变化。
+
+### 4. 故障注入
+
+| 场景 | 结果 |
+|---|---|
+| mock 70% 5xx，8 次手动触发 | 9 条 retry_wait、4 条 failed（进 DLQ）、4 条 success |
+| 伪造 20 分钟前的 running 记录 | reaper 22s 内改为 `retry_wait + timeout/orphaned`，指标 `price_reaper_reaped_total` +1 |
+| 负载突发 | 队列 lag 200+，KEDA 扩到 5 副本，排空后回落 1 |
+
+### 5. 数据集核对
+
+```sql
+SELECT count(*) FROM task_runs WHERE worker_id='worker-demo-01';        -- 5456
+SELECT count(*) FROM price_records WHERE raw->>'source'='demo-4d';      -- 3824
+```
+
+## 阻塞项
+
+| 项 | 原因 | 临时方案 | 解除条件 |
+|---|---|---|---|
+| 集群内 Playwright Worker | 官方基础镜像 1.6GB，MCR 拉取极慢（>45min 未完成） | Worker 用 api 镜像 + `sources.adapter=http`，HTTP 抓取 Mock 商城 | `docker pull mcr.microsoft.com/playwright/python:v1.65.2-jammy` 完成 → `docker build --target worker` → 导入 → `seed.py --adapter mock` |
+| 本地 Chromium 下载 | cdn.playwright.dev 下载失败 | 本机开发用 Edge channel（已跑通） | 同上 |
+
+> Playwright 代码路径完整（本地已用 Edge 验证抓取成功），只是容器镜像受网络限制。
 
 ## 下一步
 
-1. 完成 worker 镜像（MCR 拉取完成后 `docker build --target worker` + `k3d image import` + 扩到 2 副本）
-2. 部署 observability 栈，验证 Grafana 看板与 Kibana 日志
-3. 安装 KEDA，灌任务演示 2 → N 扩容
-4. 生成 `demo-4d` 数据集并核对 3824/5456
-5. 压测 + 故障注入（删 Pod、注入 5xx、Redis 重启）
-6. 补齐 README、答辩材料、截图
+1. MCR 镜像拉取完成后，切换集群 Worker 到 Playwright 模式并复测
+2. 截图归档：Grafana 看板、Kibana 检索、`kubectl get pods`、KEDA 扩缩
+3. 补充 README 架构图与演示脚本；整理答辩材料
+4. 压测报告（10000 任务）与故障注入记录归档到 `docs/perf/`
 
 ## 常用命令
 
 ```powershell
-# 本地开发栈
-python scripts/dev.py up / down / status
-
-# 集群
-kubectl -n price get pods
+python scripts/dev.py up|down|status          # 本地栈
+kubectl -n price get pods                     # 集群
 kubectl -n price logs deploy/worker -f
-k3d image import -c price price/worker:v1
-kubectl -n price rollout restart deploy/worker
+kubectl -n observability port-forward svc/grafana 3000:3000
+kubectl -n observability port-forward svc/kibana 5601:5601
 ```
