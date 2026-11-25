@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker-metrics
+  namespace: price
+  labels: { app: worker }
+spec:
+  clusterIP: None
+  selector: { app: worker }
+  ports:
+    - { name: metrics, port: 9100, targetPort: 9100 }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scheduler-metrics
+  namespace: price
+  labels: { app: scheduler }
+spec:
+  selector: { app: scheduler }
+  ports:
+    - { name: metrics, port: 9100, targetPort: 9100 }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reaper-metrics
+  namespace: price
+  labels: { app: reaper }
+spec:
+  selector: { app: reaper }
+  ports:
+    - { name: metrics, port: 9100, targetPort: 9100 }

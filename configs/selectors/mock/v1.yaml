@@ -1,0 +1,9 @@
+version: v1
+timeout_sec: 300
+title: "h1.product-title"
+price: ".product-price .amount"
+stock: ".stock-status"
+currency: "CNY"
+in_stock_text: "现货"
+out_of_stock_text: "缺货"
+strip_chars: "¥￥, "

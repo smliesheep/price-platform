@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate
+  namespace: price
+  labels: { app: migrate }
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels: { app: migrate }
+    spec:
+      restartPolicy: Never
+      securityContext: { runAsNonRoot: true, runAsUser: 10001 }
+      containers:
+        - name: migrate
+          image: price/api:v1
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "alembic", "upgrade", "head"]
+          envFrom:
+            - configMapRef: { name: price-config }
+            - secretRef:    { name: price-secret }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits:   { cpu: 500m, memory: 256Mi }

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: price
+spec:
+  replicas: 2
+  strategy:
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: worker }
+  template:
+    metadata:
+      labels: { app: worker }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9100"
+    spec:
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        fsGroup: 10001
+      containers:
+        - name: worker
+          image: price/worker:v1
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef: { name: price-config }
+            - secretRef:    { name: price-secret }
+          env:
+            - { name: PP_POD_NAME, valueFrom: { fieldRef: { fieldPath: metadata.name } } }
+            - { name: PP_NODE_NAME, valueFrom: { fieldRef: { fieldPath: spec.nodeName } } }
+            - { name: HOME, value: /tmp }
+            - { name: XDG_CACHE_HOME, value: /tmp/.cache }
+          ports:
+            - { name: metrics, containerPort: 9100 }
+          resources:
+            requests: { cpu: 500m, memory: 1Gi }
+            limits:   { cpu: "1",  memory: 2Gi }
+          readinessProbe:
+            httpGet: { path: /-/healthy, port: metrics }
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /-/healthy, port: metrics }
+            initialDelaySeconds: 30
+            periodSeconds: 20
+          lifecycle:
+            preStop: { exec: { command: ["sh", "-c", "sleep 5"] } }
+          volumeMounts:
+            - { name: selectors, mountPath: /etc/price/selectors, readOnly: true }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: selectors
+          configMap: { name: price-selectors }
+        - name: tmp
+          emptyDir: { sizeLimit: 1Gi }

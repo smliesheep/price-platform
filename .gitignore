@@ -1,0 +1,27 @@
+# ---- python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ---- env / secrets ----
+.env
+.env.local
+
+# ---- node ----
+node_modules/
+frontend/dist/
+*.log
+
+# ---- data / artifacts ----
+data/
+docs/perf/*.png
+*.sqlite3
+
+# ---- k8s ----
+deploy/**/secrets.local.yaml
+kubeconfig*

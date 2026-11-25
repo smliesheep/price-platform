@@ -1,0 +1,105 @@
+/* 主题变量：浅色为默认，html.dark 覆盖为深色（Element Plus 暗色变量另行导入）。 */
+
+:root {
+  color-scheme: light;
+
+  --pm-bg: #f3f6fb;
+  --pm-surface: #ffffff;
+  --pm-surface-soft: #f8fafc;
+  --pm-surface-strong: #eef3fa;
+  --pm-border: #e4eaf3;
+  --pm-border-strong: #d5dfec;
+  --pm-text: #182234;
+  --pm-text-secondary: #5b6b83;
+  --pm-text-muted: #8593a8;
+  --pm-primary: #2563eb;
+  --pm-primary-hover: #1d4ed8;
+  --pm-primary-soft: rgba(37, 99, 235, 0.1);
+  --pm-success: #15803d;
+  --pm-success-soft: rgba(21, 128, 61, 0.1);
+  --pm-warning: #b45309;
+  --pm-warning-soft: rgba(180, 83, 9, 0.12);
+  --pm-danger: #dc2626;
+  --pm-danger-soft: rgba(220, 38, 38, 0.1);
+  --pm-info: #0369a1;
+  --pm-sidebar-bg: #ffffff;
+  --pm-sidebar-text: #4a5a72;
+  --pm-topbar-bg: rgba(255, 255, 255, 0.88);
+  --pm-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
+  --pm-shadow-hover: 0 2px 4px rgba(15, 23, 42, 0.05), 0 16px 36px rgba(15, 23, 42, 0.08);
+  --pm-grid-line: #e8eef7;
+  --pm-code-bg: #f1f5f9;
+  --pm-chart-grid: #eef2f7;
+
+  --el-color-primary: #2563eb;
+  --el-color-primary-light-3: #5b8def;
+  --el-color-primary-light-5: #8ab0f5;
+  --el-color-primary-light-7: #b9cdfa;
+  --el-color-primary-light-8: #d1ddfc;
+  --el-color-primary-light-9: #e8eefe;
+  --el-color-primary-dark-2: #1d4ed8;
+  --el-border-radius-base: 8px;
+  --el-font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+
+html.dark {
+  color-scheme: dark;
+
+  --pm-bg: #0a1020;
+  --pm-surface: #111a2e;
+  --pm-surface-soft: #16213a;
+  --pm-surface-strong: #1c2942;
+  --pm-border: #22304a;
+  --pm-border-strong: #2d3e5c;
+  --pm-text: #e6edf8;
+  --pm-text-secondary: #9baccc;
+  --pm-text-muted: #6f82a3;
+  --pm-primary: #60a5fa;
+  --pm-primary-hover: #93c5fd;
+  --pm-primary-soft: rgba(96, 165, 250, 0.14);
+  --pm-success: #4ade80;
+  --pm-success-soft: rgba(74, 222, 128, 0.13);
+  --pm-warning: #fbbf24;
+  --pm-warning-soft: rgba(251, 191, 36, 0.14);
+  --pm-danger: #f87171;
+  --pm-danger-soft: rgba(248, 113, 113, 0.14);
+  --pm-info: #38bdf8;
+  --pm-sidebar-bg: #0d1627;
+  --pm-sidebar-text: #a3b3cc;
+  --pm-topbar-bg: rgba(13, 22, 39, 0.88);
+  --pm-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 12px 30px rgba(0, 0, 0, 0.22);
+  --pm-shadow-hover: 0 2px 6px rgba(0, 0, 0, 0.35), 0 18px 40px rgba(0, 0, 0, 0.3);
+  --pm-grid-line: rgba(148, 163, 184, 0.16);
+  --pm-code-bg: #0b1322;
+  --pm-chart-grid: rgba(148, 163, 184, 0.14);
+
+  --el-color-primary: #60a5fa;
+  --el-color-primary-light-3: #4b8fd6;
+  --el-color-primary-light-5: #3c73ae;
+  --el-color-primary-light-7: #2d5685;
+  --el-color-primary-light-8: #27496f;
+  --el-color-primary-light-9: #1f3550;
+  --el-color-primary-dark-2: #93c5fd;
+
+  --el-bg-color: #111a2e;
+  --el-bg-color-page: #0a1020;
+  --el-bg-color-overlay: #16213a;
+  --el-fill-color-blank: #111a2e;
+  --el-fill-color-light: #18233a;
+  --el-fill-color-lighter: #16203a;
+  --el-fill-color-dark: #1f2c46;
+  --el-border-color: #22304a;
+  --el-border-color-light: #22304a;
+  --el-border-color-lighter: #1d2a42;
+  --el-border-color-extra-light: #19243a;
+  --el-text-color-primary: #e6edf8;
+  --el-text-color-regular: #c2d0e6;
+  --el-text-color-secondary: #9baccc;
+  --el-text-color-placeholder: #6f82a3;
+  --el-mask-color: rgba(5, 10, 20, 0.72);
+  --el-box-shadow-light: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --el-box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  --el-disabled-bg-color: #16213a;
+  --el-disabled-text-color: #5b6b83;
+  --el-disabled-border-color: #263655;
+}

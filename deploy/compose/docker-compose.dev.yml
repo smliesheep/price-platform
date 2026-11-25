@@ -1,0 +1,64 @@
+﻿name: price-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: price-postgres
+    environment:
+      POSTGRES_USER: price
+      POSTGRES_PASSWORD: price
+      POSTGRES_DB: price
+      TZ: Asia/Shanghai
+      PGTZ: Asia/Shanghai
+    command:
+      - postgres
+      - -c
+      - max_connections=100
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - log_min_duration_statement=500ms
+    ports:
+      - "55432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U price -d price"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: price-redis
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    ports:
+      - "56379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mock-shop:
+    build:
+      context: ../..
+      dockerfile: mock-shop/Dockerfile
+    container_name: price-mock-shop
+    environment:
+      FAIL_RATE: "0"
+      DELAY_MS: "0"
+    ports:
+      - "8088:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request;urllib.request.urlopen('http://localhost:8080/healthz')\""]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
+  redisdata:
+

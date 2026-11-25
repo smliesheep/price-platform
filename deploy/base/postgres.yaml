@@ -1,0 +1,71 @@
+﻿apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: price
+  labels: { app: postgres }
+spec:
+  selector: { app: postgres }
+  ports:
+    - { name: pg, port: 5432, targetPort: 5432 }
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: price
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels: { app: postgres }
+  template:
+    metadata:
+      labels: { app: postgres }
+    spec:
+      securityContext:
+        fsGroup: 70
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+          args:
+            - -c
+            - max_connections=100
+            - -c
+            - shared_buffers=256MB
+            - -c
+            - work_mem=8MB
+            - -c
+            - log_min_duration_statement=500ms
+            - -c
+            - timezone=Asia/Shanghai
+          ports:
+            - { name: pg, containerPort: 5432 }
+          env:
+            - name: POSTGRES_USER
+              valueFrom: { secretKeyRef: { name: price-secret, key: POSTGRES_USER } }
+            - name: POSTGRES_PASSWORD
+              valueFrom: { secretKeyRef: { name: price-secret, key: POSTGRES_PASSWORD } }
+            - name: POSTGRES_DB
+              valueFrom: { secretKeyRef: { name: price-secret, key: POSTGRES_DB } }
+            - { name: PGDATA, value: /var/lib/postgresql/data/pgdata }
+            - { name: TZ, value: Asia/Shanghai }
+          resources:
+            requests: { cpu: 300m, memory: 512Mi }
+            limits:   { cpu: "1",  memory: 1536Mi }
+          readinessProbe:
+            exec: { command: ["pg_isready", "-U", "price", "-d", "price"] }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            exec: { command: ["pg_isready", "-U", "price", "-d", "price"] }
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          volumeMounts:
+            - { name: data, mountPath: /var/lib/postgresql/data }
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: postgres-data
+

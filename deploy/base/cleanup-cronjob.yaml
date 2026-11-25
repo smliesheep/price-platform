@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cleanup
+  namespace: price
+spec:
+  schedule: "0 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: cleanup
+              image: postgres:16-alpine
+              command:
+                - sh
+                - -c
+                - |
+                  psql "$PP_DATABASE_URL" -v ON_ERROR_STOP=1 -c "
+                    DELETE FROM task_runs WHERE finished_at < now() - interval '90 days' AND status <> 'failed';
+                    DELETE FROM task_runs WHERE finished_at < now() - interval '365 days';
+                    DELETE FROM workers   WHERE last_heartbeat < now() - interval '1 day';
+                    DELETE FROM alerts    WHERE resolved_at IS NOT NULL AND resolved_at < now() - interval '30 days';
+                  "
+              envFrom:
+                - configMapRef: { name: price-config }
+              resources:
+                requests: { cpu: 20m, memory: 32Mi }
+                limits:   { cpu: 200m, memory: 128Mi }

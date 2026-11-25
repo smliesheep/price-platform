@@ -1,0 +1,134 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: observability
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets: ["alertmanager:9093"]
+    rule_files:
+      - /etc/prometheus/rules/*.yml
+    scrape_configs:
+      - job_name: api
+        metrics_path: /metrics
+        static_configs:
+          - targets: ["api.price.svc.cluster.local:8000"]
+      - job_name: worker
+        metrics_path: /metrics
+        dns_sd_configs:
+          - names: ["worker-metrics.price.svc.cluster.local"]
+            type: A
+            port: 9100
+      - job_name: scheduler
+        static_configs:
+          - targets: ["scheduler-metrics.price.svc.cluster.local:9100"]
+      - job_name: reaper
+        static_configs:
+          - targets: ["reaper-metrics.price.svc.cluster.local:9100"]
+      - job_name: prometheus
+        static_configs:
+          - targets: ["localhost:9090"]
+  price-rules.yml: |
+    groups:
+      - name: price-platform
+        rules:
+          - alert: PriceTaskSuccessRateLow
+            expr: |
+              sum(rate(price_worker_tasks_finished_total{status="success"}[10m]))
+              / clamp_min(sum(rate(price_worker_tasks_finished_total[10m])), 1) < 0.9
+            for: 10m
+            labels: { severity: warning }
+            annotations:
+              summary: "采集成功率低于 90%"
+              description: "近 10 分钟成功率 {{ $value | humanizePercentage }}"
+
+          - alert: PriceQueueLagHigh
+            expr: max(price_queue_lag) > 200
+            for: 5m
+            labels: { severity: warning }
+            annotations:
+              summary: "Redis Stream 积压超过 200"
+              description: "当前 lag = {{ $value }}，考虑扩容 Worker（KEDA）"
+
+          - alert: PriceWorkerDown
+            expr: up{job="worker"} == 0
+            for: 2m
+            labels: { severity: critical }
+            annotations:
+              summary: "Worker 指标抓取失败"
+              description: "实例 {{ $labels.instance }} 连续 2 分钟不可达"
+
+          - alert: PriceDlqGrowing
+            expr: increase(price_queue_dlq_length[15m]) > 5
+            for: 5m
+            labels: { severity: warning }
+            annotations:
+              summary: "死信队列持续增长"
+              description: "15 分钟内 DLQ 增加 {{ $value }} 条，检查 parse/not_found 错误"
+
+          - alert: PriceDispatchDelayHigh
+            expr: histogram_quantile(0.95, sum by (le) (rate(price_scheduler_dispatch_delay_seconds_bucket[5m]))) > 10
+            for: 5m
+            labels: { severity: warning }
+            annotations:
+              summary: "调度延迟 P95 超过 10s"
+              description: "调度器可能积压或时钟异常"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: observability
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app: prometheus }
+  template:
+    metadata:
+      labels: { app: prometheus }
+    spec:
+      securityContext: { runAsUser: 65534, fsGroup: 65534 }
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.55.0
+          args:
+            - --config.file=/etc/prometheus/prometheus.yml
+            - --storage.tsdb.path=/prometheus
+            - --storage.tsdb.retention.time=7d
+            - --web.enable-lifecycle
+          ports:
+            - { name: http, containerPort: 9090 }
+          resources:
+            requests: { cpu: 200m, memory: 512Mi }
+            limits:   { cpu: "1", memory: 1Gi }
+          readinessProbe:
+            httpGet: { path: /-/ready, port: http }
+            initialDelaySeconds: 10
+          livenessProbe:
+            httpGet: { path: /-/healthy, port: http }
+            initialDelaySeconds: 30
+          volumeMounts:
+            - { name: config, mountPath: /etc/prometheus }
+            - { name: data, mountPath: /prometheus }
+      volumes:
+        - name: config
+          configMap: { name: prometheus-config }
+        - name: data
+          persistentVolumeClaim: { claimName: prometheus-data }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: observability
+spec:
+  selector: { app: prometheus }
+  ports:
+    - { name: http, port: 9090, targetPort: 9090 }

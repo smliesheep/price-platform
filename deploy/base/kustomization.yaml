@@ -1,0 +1,24 @@
+﻿apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: price
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - pv.yaml
+  - postgres.yaml
+  - redis.yaml
+  - mock-shop.yaml
+  - api.yaml
+  - scheduler.yaml
+  - reaper.yaml
+  - worker.yaml
+  - web.yaml
+  - metrics-services.yaml
+  - pdb.yaml
+  - networkpolicy.yaml
+  - migrate-job.yaml
+  - cleanup-cronjob.yaml
+  - ingress-any-host.yaml
+
+

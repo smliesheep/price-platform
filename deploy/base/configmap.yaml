@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: price-config
+  namespace: price
+data:
+  PP_LOG_LEVEL: "INFO"
+  PP_TZ: "Asia/Shanghai"
+  PP_DATABASE_URL: "postgresql://price:price@postgres:5432/price"
+  PP_REDIS_URL: "redis://redis:6379/0"
+
+  PP_QUEUE_STREAM: "price:tasks"
+  PP_QUEUE_GROUP: "workers"
+  PP_QUEUE_DLQ: "price:tasks:dlq"
+  PP_RETRY_ZSET: "price:retry"
+
+  PP_SCHEDULER_TICK_SEC: "30"
+  PP_SCHEDULER_BATCH: "200"
+  PP_PROMOTE_INTERVAL_SEC: "1"
+
+  PP_WORKER_CONCURRENCY: "2"
+  PP_WORKER_TIMEOUT_SEC: "300"
+  PP_WORKER_MAX_RETRY: "3"
+  PP_RETRY_DELAY_SEC: "5"
+  PP_WORKER_HEARTBEAT_SEC: "15"
+  PP_BROWSER_HEADLESS: "true"
+  PP_SELECTOR_DIR: "/etc/price/selectors"
+  PP_MOCK_SHOP_URL: "http://mock-shop:8080"
+
+  PP_REAPER_INTERVAL_SEC: "15"
+  PP_ORPHAN_GRACE_SEC: "30"
+  PP_STALE_QUEUED_SEC: "30"
+  PP_STALE_RETRY_WAIT_SEC: "60"
+  PP_WORKER_HEARTBEAT_TIMEOUT_SEC: "90"
+
+  PP_METRICS_PORT: "9100"
+  PP_DISABLE_AUTH: "false"
+  PP_CORS_ORIGINS: "*"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: price-selectors
+  namespace: price
+data:
+  mock-v1.yaml: |
+    version: v1
+    timeout_sec: 300
+    title: "h1.product-title"
+    price: ".product-price .amount"
+    stock: ".stock-status"
+    currency: "CNY"
+    in_stock_text: "现货"
+    out_of_stock_text: "缺货"
+    strip_chars: "¥￥, "
+  generic-v1.yaml: |
+    version: v1
+    timeout_sec: 300
+    title: "h1.product-title, h1"
+    price: ".product-price .amount, .price, [itemprop='price']"
+    stock: ".stock-status, .availability"
+    currency: "CNY"
+    in_stock_text: "现货"
+    out_of_stock_text: "缺货"
+    strip_chars: "¥￥, "

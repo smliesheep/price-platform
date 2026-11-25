@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reaper
+  namespace: price
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: reaper }
+  template:
+    metadata:
+      labels: { app: reaper }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9100"
+    spec:
+      securityContext: { runAsNonRoot: true, runAsUser: 10001 }
+      containers:
+        - name: reaper
+          image: price/api:v1
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-m", "price_platform.reaper.main"]
+          envFrom:
+            - configMapRef: { name: price-config }
+            - secretRef:    { name: price-secret }
+          env:
+            - { name: PP_POD_NAME, valueFrom: { fieldRef: { fieldPath: metadata.name } } }
+          ports:
+            - { name: metrics, containerPort: 9100 }
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits:   { cpu: 200m, memory: 192Mi }
+          readinessProbe:
+            httpGet: { path: /-/healthy, port: metrics }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /-/healthy, port: metrics }
+            initialDelaySeconds: 20
+            periodSeconds: 20

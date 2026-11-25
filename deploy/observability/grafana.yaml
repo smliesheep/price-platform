@@ -1,0 +1,154 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: observability
+data:
+  datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus:9090
+        isDefault: true
+        editable: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-provider
+  namespace: observability
+data:
+  provider.yaml: |
+    apiVersion: 1
+    providers:
+      - name: price
+        orgId: 1
+        folder: "Price Platform"
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        options:
+          path: /var/lib/grafana/dashboards
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-price
+  namespace: observability
+data:
+  price-platform.json: |
+    {
+      "title": "Price Platform · 总览",
+      "uid": "price-platform",
+      "timezone": "browser",
+      "refresh": "30s",
+      "time": { "from": "now-6h", "to": "now" },
+      "panels": [
+        {
+          "id": 1, "type": "stat", "title": "采集成功率（5m）", "gridPos": { "x": 0, "y": 0, "w": 6, "h": 6 },
+          "targets": [{ "expr": "sum(rate(price_worker_tasks_finished_total{status=\"success\"}[5m])) / clamp_min(sum(rate(price_worker_tasks_finished_total[5m])), 1)", "legendFormat": "success" }],
+          "fieldConfig": { "defaults": { "unit": "percentunit", "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 0.95 }] } }, "overrides": [] }
+        },
+        {
+          "id": 2, "type": "stat", "title": "队列 lag", "gridPos": { "x": 6, "y": 0, "w": 6, "h": 6 },
+          "targets": [{ "expr": "max(price_queue_lag)", "legendFormat": "lag" }]
+        },
+        {
+          "id": 3, "type": "stat", "title": "DLQ 长度", "gridPos": { "x": 12, "y": 0, "w": 6, "h": 6 },
+          "targets": [{ "expr": "max(price_queue_dlq_length)", "legendFormat": "dlq" }]
+        },
+        {
+          "id": 4, "type": "stat", "title": "在线 Worker", "gridPos": { "x": 18, "y": 0, "w": 6, "h": 6 },
+          "targets": [{ "expr": "count(up{job=\"worker\"} == 1)", "legendFormat": "workers" }]
+        },
+        {
+          "id": 5, "type": "timeseries", "title": "任务吞吐（按状态）", "gridPos": { "x": 0, "y": 6, "w": 12, "h": 8 },
+          "targets": [{ "expr": "sum by (status) (rate(price_worker_tasks_finished_total[1m]))", "legendFormat": "{{status}}" }]
+        },
+        {
+          "id": 6, "type": "timeseries", "title": "任务耗时 P95", "gridPos": { "x": 12, "y": 6, "w": 12, "h": 8 },
+          "targets": [{ "expr": "histogram_quantile(0.95, sum by (le) (rate(price_worker_task_duration_seconds_bucket[5m])))", "legendFormat": "p95" }],
+          "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] }
+        },
+        {
+          "id": 7, "type": "timeseries", "title": "调度延迟 P95 / 投递量", "gridPos": { "x": 0, "y": 14, "w": 12, "h": 8 },
+          "targets": [
+            { "expr": "histogram_quantile(0.95, sum by (le) (rate(price_scheduler_dispatch_delay_seconds_bucket[5m])))", "legendFormat": "dispatch p95" },
+            { "expr": "sum(rate(price_scheduler_dispatched_total[5m]))", "legendFormat": "dispatched/s" }
+          ]
+        },
+        {
+          "id": 8, "type": "timeseries", "title": "队列水位", "gridPos": { "x": 12, "y": 14, "w": 12, "h": 8 },
+          "targets": [
+            { "expr": "max(price_queue_lag)", "legendFormat": "lag" },
+            { "expr": "max(price_queue_pending)", "legendFormat": "pending" },
+            { "expr": "max(price_retry_queue_length)", "legendFormat": "retry" }
+          ]
+        },
+        {
+          "id": 9, "type": "timeseries", "title": "错误类型分布", "gridPos": { "x": 0, "y": 22, "w": 12, "h": 8 },
+          "targets": [{ "expr": "sum by (status) (rate(price_worker_tasks_finished_total{status=~\"failed|timeout\"}[5m]))", "legendFormat": "{{status}}" }]
+        },
+        {
+          "id": 10, "type": "timeseries", "title": "重复消费率（幂等有效性）", "gridPos": { "x": 12, "y": 22, "w": 12, "h": 8 },
+          "targets": [{ "expr": "sum(rate(price_run_claims_total{result=\"duplicate\"}[5m]))", "legendFormat": "duplicates/s" }]
+        }
+      ],
+      "schemaVersion": 39,
+      "version": 1
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: grafana }
+  template:
+    metadata:
+      labels: { app: grafana }
+    spec:
+      securityContext: { fsGroup: 472 }
+      containers:
+        - name: grafana
+          image: grafana/grafana:11.2.0
+          env:
+            - { name: GF_SECURITY_ADMIN_USER, value: admin }
+            - { name: GF_SECURITY_ADMIN_PASSWORD, value: admin }
+            - { name: GF_USERS_ALLOW_SIGN_UP, value: "false" }
+            - { name: GF_AUTH_ANONYMOUS_ENABLED, value: "true" }
+            - { name: GF_AUTH_ANONYMOUS_ORG_ROLE, value: Viewer }
+          ports:
+            - { name: http, containerPort: 3000 }
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits:   { cpu: 500m, memory: 512Mi }
+          readinessProbe:
+            httpGet: { path: /api/health, port: http }
+            initialDelaySeconds: 10
+          volumeMounts:
+            - { name: datasources, mountPath: /etc/grafana/provisioning/datasources }
+            - { name: providers, mountPath: /etc/grafana/provisioning/dashboards }
+            - { name: dashboards, mountPath: /var/lib/grafana/dashboards }
+      volumes:
+        - name: datasources
+          configMap: { name: grafana-datasources }
+        - name: providers
+          configMap: { name: grafana-dashboard-provider }
+        - name: dashboards
+          configMap: { name: grafana-dashboard-price }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: observability
+spec:
+  selector: { app: grafana }
+  ports:
+    - { name: http, port: 3000, targetPort: 3000 }
