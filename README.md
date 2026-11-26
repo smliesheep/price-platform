@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
 
 # Price Platform
 
@@ -122,6 +122,8 @@ kubectl apply -k deploy/observability
 - **Kibana**：`price-logs-*` 索引，按 `trace_id` 串联 API → 调度 → Worker 全链路；
 - **Alertmanager**：5 条规则（成功率、队列积压、Worker 掉线、DLQ 增长、调度延迟），webhook 写入 `alerts` 表。
 
+<img src="docs/img/grafana.png" width="920" alt="Grafana 总览看板" />
+
 ## 🧪 测试
 
 ```bash
@@ -171,5 +173,6 @@ price-platform/
 ## 📄 License
 
 [MIT](LICENSE)
+
 
 
