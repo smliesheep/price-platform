@@ -1,4 +1,4 @@
-﻿# 部署手册（k3d 1 server + 2 agents）
+# 部署手册（k3d 1 server + 2 agents）
 
 > 目标：在一台 Windows 机器上复现"1 控制节点 + 2 工作节点"的集群，并跑起全部组件。
 

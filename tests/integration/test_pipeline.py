@@ -1,4 +1,4 @@
-﻿"""集成测试：真实 Postgres + Redis 上验证调度、抢占、幂等。
+"""集成测试：真实 Postgres + Redis 上验证调度、抢占、幂等。
 
 前置：
     docker compose -f deploy/compose/docker-compose.dev.yml up -d postgres redis
