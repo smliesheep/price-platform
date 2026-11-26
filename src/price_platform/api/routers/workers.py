@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from fastapi import APIRouter
 from sqlalchemy import select
 
 from price_platform.api.deps import CurrentUser, SessionDep
@@ -9,7 +10,6 @@ from price_platform.api.schemas.common import ok
 from price_platform.common.settings import settings
 from price_platform.common.timeutil import utcnow
 from price_platform.models.entities import Worker
-from fastapi import APIRouter
 
 router = APIRouter(tags=["workers"])
 

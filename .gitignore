@@ -25,3 +25,7 @@ docs/perf/*.png
 # ---- k8s ----
 deploy/**/secrets.local.yaml
 kubeconfig*
+
+# ---- local tool binaries ----
+tools/
+

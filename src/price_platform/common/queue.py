@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import datetime
-from typing import Any, Mapping
+from typing import Any
 
 from redis.asyncio import Redis
 from redis.exceptions import ResponseError
@@ -47,7 +48,7 @@ class TaskMessage:
         }
 
     @classmethod
-    def from_fields(cls, fields: Mapping[str, Any]) -> "TaskMessage":
+    def from_fields(cls, fields: Mapping[str, Any]) -> TaskMessage:
         try:
             version = int(fields.get("v", 1))
             if version != MESSAGE_VERSION:
@@ -72,7 +73,7 @@ class TaskMessage:
         return json.dumps(self.to_fields(), ensure_ascii=False, separators=(",", ":"))
 
     @classmethod
-    def from_json(cls, raw: str) -> "TaskMessage":
+    def from_json(cls, raw: str) -> TaskMessage:
         try:
             payload = json.loads(raw)
         except json.JSONDecodeError as exc:
@@ -81,7 +82,7 @@ class TaskMessage:
             raise MessageFormatError("message must be a json object")
         return cls.from_fields(payload)
 
-    def next_attempt(self, run_id: int) -> "TaskMessage":
+    def next_attempt(self, run_id: int) -> TaskMessage:
         return replace(self, run_id=run_id, attempt=self.attempt + 1)
 
 

@@ -1,4 +1,4 @@
-"""站点适配器：打开页面 → 等元素 → 取 HTML → 解析价格。
+﻿"""站点适配器：打开页面 → 等元素 → 取 HTML → 解析价格。
 
 真实执行由 Playwright 驱动；解析用 selectolax，两者解耦，便于单测。
 """
@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import json
 import re
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from decimal import Decimal, InvalidOperation
 from typing import Any
@@ -82,7 +81,7 @@ def _json_ld_price(tree: HTMLParser) -> Decimal | None:
     return None
 
 
-class BaseAdapter(ABC):
+class BaseAdapter:
     name: str = "base"
     needs_browser: bool = True
 
@@ -210,5 +209,6 @@ def _classify_navigation(exc: BaseException, url: str) -> ScrapeError:
     if "404" in text:
         return NotFoundError(f"not found: {url}")
     return NetworkError(f"navigation failed: {url} ({type(exc).__name__})")
+
 
 

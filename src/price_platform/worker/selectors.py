@@ -24,7 +24,7 @@ class SelectorSet:
     strip_chars: str
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any], version: str) -> "SelectorSet":
+    def from_dict(cls, data: dict[str, Any], version: str) -> SelectorSet:
         def many(value: Any) -> tuple[str, ...]:
             if value is None:
                 return ()

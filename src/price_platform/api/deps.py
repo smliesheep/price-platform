@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Annotated, AsyncIterator
+from typing import Annotated
 
 import jwt
 from fastapi import Depends, Header, HTTPException, Query

@@ -1,4 +1,4 @@
-﻿# 答辩演示脚本（15 分钟）
+﻿# 演示脚本（15 分钟）
 
 前置：
 ```powershell
@@ -110,4 +110,5 @@ Get-Content scripts/verify_numbers.sql | kubectl -n price exec -i postgres-0 -- 
 ## 常见追问准备
 
 见设计文档 §9.2 的 13 个问答（Redis Stream vs List、幂等三层、单副本调度、30s 精度、ZSET 重试、超时双保险、资源取舍、containerd、ES 单节点、数据口径、选择器失效、RPA 与爬虫区别、扩容路径）。
+
 
