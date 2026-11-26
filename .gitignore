@@ -29,3 +29,7 @@ kubeconfig*
 # ---- local tool binaries ----
 tools/
 
+
+# ---- local runtime artifacts ----
+.pw-browsers/
+
