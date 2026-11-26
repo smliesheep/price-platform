@@ -33,3 +33,7 @@ tools/
 # ---- local runtime artifacts ----
 .pw-browsers/
 
+
+# ---- local logs ----
+logs/
+
